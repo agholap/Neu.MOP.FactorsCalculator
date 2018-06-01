@@ -17,6 +17,6 @@ namespace Neu.MOP.FactorsCalculator
         public const string CreateMessage = "create";
         public const string UpdateMessage = "update";
         public const string PostImage = "PostImage";
-        public const string Target = "target";
+        public const string Target = "Target";
     }
 }
