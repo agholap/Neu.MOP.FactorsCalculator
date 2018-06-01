@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ServiceModel;
 using Microsoft.Xrm.Sdk;
 
@@ -48,7 +49,40 @@ namespace Neu.MOP.FactorsCalculator
             {
                 throw new ArgumentNullException("localContext");
             }
+            //check if plugin register on opportunity profile entity
+            if(localContext.PluginExecutionContext.PrimaryEntityName == Constant.EntityNameOpportunityProfile)
+            {
+                Entity entity = null; Guid entityId = Guid.Empty;
+                if(localContext.PluginExecutionContext.MessageName.ToLower().Equals(Constant.CreateMessage))
+                {
+                    entity = localContext.PluginExecutionContext.InputParameters[Constant.Target] as Entity;                    
+                }
+                if(localContext.PluginExecutionContext.MessageName.ToLower().Equals(Constant.UpdateMessage))
+                {
+                    entity = localContext.PluginExecutionContext.PostEntityImages[Constant.PostImage];
+                }
+                string[] opportunityFactors = Constant.OpportunityFactors.Split(',');
+                string[] riskFactors =Constant.RiskFactors.Split(',');
+                int opportunitScore = 0; int riskScore = 0;
+                foreach (var attribute in entity.Attributes)
+                {
+                    if(Array.IndexOf(opportunityFactors,attribute.Key)>-1)
+                    {
+                        opportunitScore += ((OptionSetValue)attribute.Value).Value;
+                    }
+                    if(Array.IndexOf(riskFactors,attribute.Key) > -1)
+                    {
+                        riskScore += ((OptionSetValue)attribute.Value).Value;
+                    }
+                }
 
+                //update opportunity factors and risk factors
+                Entity opportunityProfile = new Entity(Constant.EntityNameOpportunityProfile);
+                opportunityProfile.Attributes.Add(Constant.PrimaryKeyOpportunityProfile, entity.Id);
+                opportunityProfile.Attributes.Add(Constant.AttributeOpportunityFactors, opportunitScore);
+                opportunityProfile.Attributes.Add(Constant.AttributeRiskFactors, riskScore);
+                localContext.OrganizationService.Update(opportunityProfile);                
+            }
             // TODO: Implement your custom plug-in business logic.
 
         }
